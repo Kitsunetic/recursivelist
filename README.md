@@ -1,6 +1,6 @@
 # RecursiveList
 
-List files recursively using channels
+List files recursively using channels and a goroutine with Golang
 
 ## Installation and Usage
 
