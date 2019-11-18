@@ -47,7 +47,7 @@ func recursiveList(directory, root string) (chan string, chan error, chan bool) 
 			case mode.IsRegular():
 				out <- filepath.Join(root, fname)
 			case mode.IsDir():
-				ifiles, ierrs, idone := listRecurrent(file, filepath.Join(root, fname))
+				ifiles, ierrs, idone := recursiveList(file, filepath.Join(root, fname))
 			L:
 				for {
 					select {
