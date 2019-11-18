@@ -7,16 +7,16 @@ import (
 )
 
 /*
-ListRecurrent Lists files of a directory recurrently using channels.
+RecursiveList Lists files of a directory recurrently using channels.
 The output paths will be appeared with relative path.
 
 directory string - the directory path to list files
 */
-func ListRecurrent(directory string) (chan string, chan error, chan bool) {
-	return listRecurrent(directory, "/")
+func RecursiveList(directory string) (chan string, chan error, chan bool) {
+	return recursiveList(directory, "/")
 }
 
-func listRecurrent(directory, root string) (chan string, chan error, chan bool) {
+func recursiveList(directory, root string) (chan string, chan error, chan bool) {
 	out := make(chan string)
 	errs := make(chan error)
 	done := make(chan bool)
