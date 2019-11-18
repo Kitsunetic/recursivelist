@@ -2,7 +2,7 @@
 
 List files recursively using channels
 
-## Installation and usage
+## Installation and Usage
 
 Install library using `go get` command.
 
@@ -33,6 +33,21 @@ L:
         }
     }
 }
+```
+
+The structure of directory `test` is
+
+```
+test
+  + a
+    + b
+      - b1
+    + c
+      - c1
+      - c2
+    - a1
+    - a2
+  - test.go
 ```
 
 The result is
