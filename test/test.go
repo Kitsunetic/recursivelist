@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	files, errs, done := recursivelist.ListRecurrent("./")
+	files, errs, done := recursivelist.RecursiveList("./")
 L:
 	for {
 		select {
