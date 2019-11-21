@@ -12,36 +12,40 @@ The output paths will be appeared with relative path.
 
 directory string - the directory path to list files
 */
-func RecursiveList(directory string) (chan string, chan error, chan bool, error) {
+func RecursiveList(directory string) (chan string, chan error, chan bool) {
 	return recursiveList(directory, "/")
 }
 
-func recursiveList(directory, root string) (chan string, chan error, chan bool, error) {
+func recursiveList(directory, root string) (chan string, chan error, chan bool) {
 	out := make(chan string)
 	errs := make(chan error)
 	done := make(chan bool)
 
-	dir, err := filepath.Abs(directory)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	go func() {
+		dir, err := filepath.Abs(directory)
+		if err != nil {
+			errs <- err
+			return
+		}
 
-	matches, err := filepath.Glob(filepath.Join(dir, "*"))
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	go insertFiles(matches, root, out, errs, done)
+		files, err := filepath.Glob(filepath.Join(dir, "*"))
+		if err != nil {
+			errs <- err
+			return
+		}
+		go insertFiles(files, root, out, errs, done)
+	}()
 
-	return out, errs, done, nil
+	return out, errs, done
 }
 
-func insertFiles(matches []string, root string, out chan string, errs chan error, done chan bool) {
-	if len(matches) == 0 {
+func insertFiles(files []string, root string, out chan string, errs chan error, done chan bool) {
+	if len(files) == 0 {
 		// If it's a directory without file then give just directory name to out.
 		out <- root
 	} else {
 	L1:
-		for _, file := range matches {
+		for _, file := range files {
 			_, fname := filepath.Split(file)
 			if strings.HasPrefix(fname, ".") {
 				continue
