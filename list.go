@@ -12,26 +12,34 @@ The output paths will be appeared with relative path.
 
 directory string - the directory path to list files
 */
-func RecursiveList(directory string) (chan string, chan error, chan bool) {
+func RecursiveList(directory string) (chan string, chan error, chan bool, error) {
 	return recursiveList(directory, "/")
 }
 
-func recursiveList(directory, root string) (chan string, chan error, chan bool) {
+func recursiveList(directory, root string) (chan string, chan error, chan bool, error) {
 	out := make(chan string)
 	errs := make(chan error)
 	done := make(chan bool)
 
 	dir, err := filepath.Abs(directory)
 	if err != nil {
-		errs <- err
+		return nil, nil, nil, err
 	}
 
 	matches, err := filepath.Glob(filepath.Join(dir, "*"))
 	if err != nil {
-		errs <- err
+		return nil, nil, nil, err
 	}
+	go insertFiles(matches, root, out, errs, done)
 
-	go func() {
+	return out, errs, done, nil
+}
+
+func insertFiles(matches []string, root string, out chan string, errs chan error, done chan bool) {
+	if len(matches) == 0 {
+		// If it's a directory without file then give just directory name to out.
+		out <- root
+	} else {
 		for _, file := range matches {
 			_, fname := filepath.Split(file)
 			if strings.HasPrefix(fname, ".") {
@@ -61,8 +69,6 @@ func recursiveList(directory, root string) (chan string, chan error, chan bool) 
 				}
 			}
 		}
-		done <- true
-	}()
-
-	return out, errs, done
+	}
+	done <- true
 }
