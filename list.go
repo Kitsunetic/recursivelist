@@ -12,35 +12,26 @@ The output paths will be appeared with relative path.
 
 directory string - the directory path to list files
 */
-func RecursiveList(directory string) (chan string, chan error, chan bool, error) {
+func RecursiveList(directory string) (chan string, chan error, chan bool) {
 	return recursiveList(directory, "/")
 }
 
-func recursiveList(directory, root string) (chan string, chan error, chan bool, error) {
+func recursiveList(directory, root string) (chan string, chan error, chan bool) {
 	out := make(chan string)
 	errs := make(chan error)
 	done := make(chan bool)
 
 	dir, err := filepath.Abs(directory)
 	if err != nil {
-		return nil, nil, nil, err
+		errs <- err
 	}
 
 	matches, err := filepath.Glob(filepath.Join(dir, "*"))
 	if err != nil {
-		return nil, nil, nil, err
+		errs <- err
 	}
-	go insertFiles(matches, root, out, errs, done)
 
-	return out, errs, done, nil
-}
-
-func insertFiles(matches []string, root string, out chan string, errs chan error, done chan bool) {
-	if len(matches) == 0 {
-		// If it's a directory without file then give just directory name to out.
-		out <- root
-	} else {
-	L1:
+	go func() {
 		for _, file := range matches {
 			_, fname := filepath.Split(file)
 			if strings.HasPrefix(fname, ".") {
@@ -56,12 +47,8 @@ func insertFiles(matches []string, root string, out chan string, errs chan error
 			case mode.IsRegular():
 				out <- filepath.Join(root, fname)
 			case mode.IsDir():
-				ifiles, ierrs, idone, err := recursiveList(file, filepath.Join(root, fname))
-				if err != nil {
-					errs <- err
-					continue L1
-				}
-			L2:
+				ifiles, ierrs, idone := recursiveList(file, filepath.Join(root, fname))
+			L:
 				for {
 					select {
 					case ifile := <-ifiles:
@@ -69,11 +56,13 @@ func insertFiles(matches []string, root string, out chan string, errs chan error
 					case ierr := <-ierrs:
 						errs <- ierr
 					case <-idone:
-						break L2
+						break L
 					}
 				}
 			}
 		}
-	}
-	done <- true
+		done <- true
+	}()
+
+	return out, errs, done
 }
