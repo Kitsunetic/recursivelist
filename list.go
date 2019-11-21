@@ -60,7 +60,7 @@ func insertFiles(files []string, root string, out chan string, errs chan error, 
 			case mode.IsRegular():
 				out <- filepath.Join(root, fname)
 			case mode.IsDir():
-				ifiles, ierrs, idone, err := recursiveList(file, filepath.Join(root, fname))
+				ifiles, ierrs, idone := recursiveList(file, filepath.Join(root, fname))
 				if err != nil {
 					errs <- err
 					continue L1
